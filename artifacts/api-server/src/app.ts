@@ -4,9 +4,7 @@ import session from "express-session";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { loadUser } from "./middlewares/auth";
-
-// ✅ use require for pino (Vercel-safe)
-const pinoHttp = require("pino-http") as unknown as (opts?: any) => any;
+import pinoHttp from "pino-http";
 
 const app: Express = express();
 
@@ -16,7 +14,7 @@ app.use(
     serializers: {
       req(req: Request & { id?: string }) {
         return {
-          id: (req as any).id,
+          id: req.id,
           method: req.method,
           url: req.url?.split("?")[0],
         };
