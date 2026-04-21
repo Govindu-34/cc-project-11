@@ -5,8 +5,29 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { loadUser } from "./middlewares/auth";
-import "/vercel/path0/node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/index"
+import pinoHttp from "pino-http";
 const app: Express = express();
+import { Request, Response } from "express";
+
+app.use(
+  pinoHttp({
+    logger,
+    serializers: {
+      req(req: Request) {
+        return {
+          id: (req as any).id,
+          method: req.method,
+          url: req.url?.split("?")[0],
+        };
+      },
+      res(res: Response) {
+        return {
+          statusCode: res.statusCode,
+        };
+      },
+    },
+  })
+);
 
 app.use(
   pinoHttp({
