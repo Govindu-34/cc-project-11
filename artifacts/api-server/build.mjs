@@ -100,6 +100,7 @@ async function buildAll() {
       "puppeteer",
       "puppeteer-core",
       "electron",
+      "pino-http",
     ],
     sourcemap: "linked",
     plugins: [
