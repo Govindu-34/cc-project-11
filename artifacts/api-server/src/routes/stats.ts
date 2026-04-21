@@ -6,8 +6,11 @@ import {
   GetStatsByDepartmentResponse,
   GetWeeklyTrendResponse,
 } from "@workspace/api-zod";
+import { requireAdmin } from "../middlewares/auth";
 
 const router: IRouter = Router();
+
+router.use("/stats", requireAdmin);
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);

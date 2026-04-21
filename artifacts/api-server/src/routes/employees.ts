@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, ilike, and, type SQL } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 import { db, employeesTable } from "@workspace/db";
 import {
   CreateEmployeeBody,
@@ -12,8 +13,11 @@ import {
   ListEmployeesResponse,
   UpdateEmployeeResponse,
 } from "@workspace/api-zod";
+import { requireAdmin } from "../middlewares/auth";
 
 const router: IRouter = Router();
+
+router.use("/employees", requireAdmin);
 
 router.get("/employees", async (req, res): Promise<void> => {
   const params = ListEmployeesQueryParams.safeParse(req.query);
@@ -42,14 +46,17 @@ router.post("/employees", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   const [row] = await db
     .insert(employeesTable)
     .values({
       name: parsed.data.name,
-      email: parsed.data.email,
+      email: parsed.data.email.trim().toLowerCase(),
       department: parsed.data.department,
       role: parsed.data.role,
       avatarColor: parsed.data.avatarColor ?? "#7c3aed",
+      passwordHash,
+      accountRole: parsed.data.accountRole ?? "user",
     })
     .returning();
   res.status(201).json(GetEmployeeResponse.parse(row));
@@ -83,9 +90,17 @@ router.patch("/employees/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const { password, ...rest } = parsed.data;
+  const updateValues: Partial<typeof employeesTable.$inferInsert> = { ...rest };
+  if (password) {
+    updateValues.passwordHash = await bcrypt.hash(password, 10);
+  }
+  if (rest.email) {
+    updateValues.email = rest.email.trim().toLowerCase();
+  }
   const [row] = await db
     .update(employeesTable)
-    .set(parsed.data)
+    .set(updateValues)
     .where(eq(employeesTable.id, params.data.id))
     .returning();
   if (!row) {

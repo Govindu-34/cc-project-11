@@ -9,6 +9,7 @@ servers:
     description: Base API path
 tags:
   - name: health
+  - name: auth
   - name: employees
   - name: attendance
   - name: stats
@@ -25,6 +26,108 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: authLogin
+      tags: [auth]
+      summary: Sign in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+
+  /auth/logout:
+    post:
+      operationId: authLogout
+      tags: [auth]
+      summary: Sign out
+      responses:
+        "204":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: authMe
+      tags: [auth]
+      summary: Current session info
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+
+  /attendance/my/today:
+    get:
+      operationId: getMyToday
+      tags: [attendance]
+      summary: Today's record for the signed-in user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MyTodayResponse" }
+
+  /attendance/my:
+    get:
+      operationId: getMyHistory
+      tags: [attendance]
+      summary: Signed-in user's recent attendance
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 30 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AttendanceRecord" }
+
+  /attendance/my/check-in:
+    post:
+      operationId: myCheckIn
+      tags: [attendance]
+      summary: Check in as the signed-in user
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SelfActionBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceRecord" }
+
+  /attendance/my/check-out:
+    post:
+      operationId: myCheckOut
+      tags: [attendance]
+      summary: Check out as the signed-in user
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SelfActionBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceRecord" }
 
   /employees:
     get:
@@ -270,9 +373,13 @@ components:
       type: string
       enum: [present, late, absent, on_leave]
 
+    AccountRole:
+      type: string
+      enum: [admin, user]
+
     Employee:
       type: object
-      required: [id, name, email, department, role, avatarColor, createdAt]
+      required: [id, name, email, department, role, avatarColor, accountRole, createdAt]
       properties:
         id: { type: integer }
         name: { type: string }
@@ -280,17 +387,20 @@ components:
         department: { type: string }
         role: { type: string }
         avatarColor: { type: string }
+        accountRole: { $ref: "#/components/schemas/AccountRole" }
         createdAt: { type: string, format: date-time }
 
     CreateEmployeeBody:
       type: object
-      required: [name, email, department, role]
+      required: [name, email, department, role, password]
       properties:
         name: { type: string, minLength: 1 }
         email: { type: string, minLength: 3 }
         department: { type: string, minLength: 1 }
         role: { type: string, minLength: 1 }
         avatarColor: { type: string }
+        password: { type: string, minLength: 4 }
+        accountRole: { $ref: "#/components/schemas/AccountRole" }
 
     UpdateEmployeeBody:
       type: object
@@ -300,6 +410,34 @@ components:
         department: { type: string }
         role: { type: string }
         avatarColor: { type: string }
+        password: { type: string, minLength: 4 }
+        accountRole: { $ref: "#/components/schemas/AccountRole" }
+
+    LoginBody:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string }
+        password: { type: string }
+
+    AuthSession:
+      type: object
+      required: [employee]
+      properties:
+        employee: { $ref: "#/components/schemas/Employee" }
+
+    SelfActionBody:
+      type: object
+      properties:
+        notes: { type: string }
+
+    MyTodayResponse:
+      type: object
+      properties:
+        record:
+          allOf:
+            - $ref: "#/components/schemas/AttendanceRecord"
+          nullable: true
 
     AttendanceRecord:
       type: object

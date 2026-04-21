@@ -15,6 +15,118 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Sign in with email and password
+ */
+export const AuthLoginBody = zod.object({
+  email: zod.string(),
+  password: zod.string(),
+});
+
+export const AuthLoginResponse = zod.object({
+  employee: zod.object({
+    id: zod.number(),
+    name: zod.string(),
+    email: zod.string(),
+    department: zod.string(),
+    role: zod.string(),
+    avatarColor: zod.string(),
+    accountRole: zod.enum(["admin", "user"]),
+    createdAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Current session info
+ */
+export const AuthMeResponse = zod.object({
+  employee: zod.object({
+    id: zod.number(),
+    name: zod.string(),
+    email: zod.string(),
+    department: zod.string(),
+    role: zod.string(),
+    avatarColor: zod.string(),
+    accountRole: zod.enum(["admin", "user"]),
+    createdAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Today's record for the signed-in user
+ */
+export const GetMyTodayResponse = zod.object({
+  record: zod
+    .object({
+      id: zod.number(),
+      employeeId: zod.number(),
+      date: zod.coerce.date(),
+      status: zod.enum(["present", "late", "absent", "on_leave"]),
+      checkInTime: zod.coerce.date().nullish(),
+      checkOutTime: zod.coerce.date().nullish(),
+      notes: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    })
+    .nullish(),
+});
+
+/**
+ * @summary Signed-in user's recent attendance
+ */
+export const getMyHistoryQueryLimitDefault = 30;
+
+export const GetMyHistoryQueryParams = zod.object({
+  limit: zod.coerce.number().default(getMyHistoryQueryLimitDefault),
+});
+
+export const GetMyHistoryResponseItem = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  date: zod.coerce.date(),
+  status: zod.enum(["present", "late", "absent", "on_leave"]),
+  checkInTime: zod.coerce.date().nullish(),
+  checkOutTime: zod.coerce.date().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const GetMyHistoryResponse = zod.array(GetMyHistoryResponseItem);
+
+/**
+ * @summary Check in as the signed-in user
+ */
+export const MyCheckInBody = zod.object({
+  notes: zod.string().optional(),
+});
+
+export const MyCheckInResponse = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  date: zod.coerce.date(),
+  status: zod.enum(["present", "late", "absent", "on_leave"]),
+  checkInTime: zod.coerce.date().nullish(),
+  checkOutTime: zod.coerce.date().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Check out as the signed-in user
+ */
+export const MyCheckOutBody = zod.object({
+  notes: zod.string().optional(),
+});
+
+export const MyCheckOutResponse = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  date: zod.coerce.date(),
+  status: zod.enum(["present", "late", "absent", "on_leave"]),
+  checkInTime: zod.coerce.date().nullish(),
+  checkOutTime: zod.coerce.date().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
  * @summary List all employees
  */
 export const ListEmployeesQueryParams = zod.object({
@@ -29,6 +141,7 @@ export const ListEmployeesResponseItem = zod.object({
   department: zod.string(),
   role: zod.string(),
   avatarColor: zod.string(),
+  accountRole: zod.enum(["admin", "user"]),
   createdAt: zod.coerce.date(),
 });
 export const ListEmployeesResponse = zod.array(ListEmployeesResponseItem);
@@ -39,12 +152,16 @@ export const ListEmployeesResponse = zod.array(ListEmployeesResponseItem);
 
 export const createEmployeeBodyEmailMin = 3;
 
+export const createEmployeeBodyPasswordMin = 4;
+
 export const CreateEmployeeBody = zod.object({
   name: zod.string().min(1),
   email: zod.string().min(createEmployeeBodyEmailMin),
   department: zod.string().min(1),
   role: zod.string().min(1),
   avatarColor: zod.string().optional(),
+  password: zod.string().min(createEmployeeBodyPasswordMin),
+  accountRole: zod.enum(["admin", "user"]).optional(),
 });
 
 export const GetEmployeeParams = zod.object({
@@ -58,6 +175,7 @@ export const GetEmployeeResponse = zod.object({
   department: zod.string(),
   role: zod.string(),
   avatarColor: zod.string(),
+  accountRole: zod.enum(["admin", "user"]),
   createdAt: zod.coerce.date(),
 });
 
@@ -65,12 +183,16 @@ export const UpdateEmployeeParams = zod.object({
   id: zod.coerce.number(),
 });
 
+export const updateEmployeeBodyPasswordMin = 4;
+
 export const UpdateEmployeeBody = zod.object({
   name: zod.string().optional(),
   email: zod.string().optional(),
   department: zod.string().optional(),
   role: zod.string().optional(),
   avatarColor: zod.string().optional(),
+  password: zod.string().min(updateEmployeeBodyPasswordMin).optional(),
+  accountRole: zod.enum(["admin", "user"]).optional(),
 });
 
 export const UpdateEmployeeResponse = zod.object({
@@ -80,6 +202,7 @@ export const UpdateEmployeeResponse = zod.object({
   department: zod.string(),
   role: zod.string(),
   avatarColor: zod.string(),
+  accountRole: zod.enum(["admin", "user"]),
   createdAt: zod.coerce.date(),
 });
 
@@ -128,6 +251,7 @@ export const GetTodayAttendanceResponseItem = zod.object({
     department: zod.string(),
     role: zod.string(),
     avatarColor: zod.string(),
+    accountRole: zod.enum(["admin", "user"]),
     createdAt: zod.coerce.date(),
   }),
 });

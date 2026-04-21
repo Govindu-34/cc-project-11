@@ -5,6 +5,7 @@
  * Online Attendance System API
  * OpenAPI spec version: 0.1.0
  */
+import type { AccountRole } from "./accountRole";
 
 export interface UpdateEmployeeBody {
   name?: string;
@@ -12,4 +13,7 @@ export interface UpdateEmployeeBody {
   department?: string;
   role?: string;
   avatarColor?: string;
+  /** @minLength 4 */
+  password?: string;
+  accountRole?: AccountRole;
 }

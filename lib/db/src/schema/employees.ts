@@ -7,6 +7,8 @@ export const employeesTable = pgTable("employees", {
   department: text("department").notNull(),
   role: text("role").notNull(),
   avatarColor: text("avatar_color").notNull().default("#7c3aed"),
+  passwordHash: text("password_hash").notNull().default(""),
+  accountRole: text("account_role").notNull().default("user"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

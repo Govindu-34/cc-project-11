@@ -16,8 +16,11 @@ import {
   GetRecentActivityQueryParams,
   GetRecentActivityResponse,
 } from "@workspace/api-zod";
+import { requireAdmin } from "../middlewares/auth";
 
 const router: IRouter = Router();
+
+router.use("/attendance", requireAdmin);
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);

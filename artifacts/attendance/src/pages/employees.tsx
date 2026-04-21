@@ -8,7 +8,7 @@ import {
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, UserPlus, MoreVertical, Edit2, Trash2, Mail, Briefcase, Building } from "lucide-react";
+import { Search, UserPlus, MoreVertical, Edit2, Trash2, Mail, Briefcase, Building, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -21,6 +21,8 @@ const formSchema = z.object({
   email: z.string().email("Invalid email"),
   department: z.string().min(1, "Department is required"),
   role: z.string().min(1, "Role is required"),
+  password: z.string().min(4, "Password must be at least 4 characters").or(z.literal("")),
+  accountRole: z.enum(["admin", "user"]).default("user"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -40,12 +42,12 @@ export default function Employees() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", email: "", department: "", role: "" }
+    defaultValues: { name: "", email: "", department: "", role: "", password: "", accountRole: "user" }
   });
 
   const openCreateModal = () => {
     setEditingId(null);
-    form.reset({ name: "", email: "", department: "", role: "" });
+    form.reset({ name: "", email: "", department: "", role: "", password: "", accountRole: "user" });
     setIsModalOpen(true);
   };
 
@@ -56,14 +58,24 @@ export default function Employees() {
       email: emp.email,
       department: emp.department,
       role: emp.role,
+      password: "",
+      accountRole: emp.accountRole ?? "user",
     });
     setIsModalOpen(true);
   };
 
   const onSubmit = (values: FormValues) => {
     if (editingId) {
+      const updateData: Record<string, unknown> = {
+        name: values.name,
+        email: values.email,
+        department: values.department,
+        role: values.role,
+        accountRole: values.accountRole,
+      };
+      if (values.password) updateData.password = values.password;
       updateEmployee.mutate(
-        { id: editingId, data: values },
+        { id: editingId, data: updateData },
         {
           onSuccess: () => {
             toast({ title: "Employee updated" });
@@ -73,8 +85,12 @@ export default function Employees() {
         }
       );
     } else {
+      if (!values.password) {
+        toast({ title: "Password required", description: "Provide an initial password for the new account.", variant: "destructive" });
+        return;
+      }
       createEmployee.mutate(
-        { data: values },
+        { data: { ...values, password: values.password } },
         {
           onSuccess: () => {
             toast({ title: "Employee created" });

@@ -5,6 +5,7 @@
  * Online Attendance System API
  * OpenAPI spec version: 0.1.0
  */
+import type { AccountRole } from "./accountRole";
 
 export interface Employee {
   id: number;
@@ -13,5 +14,6 @@ export interface Employee {
   department: string;
   role: string;
   avatarColor: string;
+  accountRole: AccountRole;
   createdAt: Date;
 }

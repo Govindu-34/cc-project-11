@@ -19,6 +19,13 @@ export const AttendanceStatus = {
   on_leave: "on_leave",
 } as const;
 
+export type AccountRole = (typeof AccountRole)[keyof typeof AccountRole];
+
+export const AccountRole = {
+  admin: "admin",
+  user: "user",
+} as const;
+
 export interface Employee {
   id: number;
   name: string;
@@ -26,6 +33,7 @@ export interface Employee {
   department: string;
   role: string;
   avatarColor: string;
+  accountRole: AccountRole;
   createdAt: string;
 }
 
@@ -39,6 +47,9 @@ export interface CreateEmployeeBody {
   /** @minLength 1 */
   role: string;
   avatarColor?: string;
+  /** @minLength 4 */
+  password: string;
+  accountRole?: AccountRole;
 }
 
 export interface UpdateEmployeeBody {
@@ -47,6 +58,22 @@ export interface UpdateEmployeeBody {
   department?: string;
   role?: string;
   avatarColor?: string;
+  /** @minLength 4 */
+  password?: string;
+  accountRole?: AccountRole;
+}
+
+export interface LoginBody {
+  email: string;
+  password: string;
+}
+
+export interface AuthSession {
+  employee: Employee;
+}
+
+export interface SelfActionBody {
+  notes?: string;
 }
 
 export interface AttendanceRecord {
@@ -58,6 +85,10 @@ export interface AttendanceRecord {
   checkOutTime?: string | null;
   notes?: string | null;
   createdAt: string;
+}
+
+export interface MyTodayResponse {
+  record?: AttendanceRecord | null;
 }
 
 export interface AttendanceWithEmployee {
@@ -133,6 +164,10 @@ export interface ActivityItem {
   action: ActivityItemAction;
   timestamp: string;
 }
+
+export type GetMyHistoryParams = {
+  limit?: number;
+};
 
 export type ListEmployeesParams = {
   search?: string;
