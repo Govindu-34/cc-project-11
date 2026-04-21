@@ -1,10 +1,12 @@
 import express, { type Express, type Request, type Response } from "express";
 import cors from "cors";
 import session from "express-session";
-import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { loadUser } from "./middlewares/auth";
+
+// ✅ use require for pino (Vercel-safe)
+const pinoHttp = require("pino-http") as unknown as (opts?: any) => any;
 
 const app: Express = express();
 
