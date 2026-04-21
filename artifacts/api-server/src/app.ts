@@ -5,7 +5,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { loadUser } from "./middlewares/auth";
-
+import "/vercel/path0/node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/index"
 const app: Express = express();
 
 app.use(
