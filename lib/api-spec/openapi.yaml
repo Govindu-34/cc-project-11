@@ -3,20 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Online Attendance System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: employees
+  - name: attendance
+  - name: stats
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +25,392 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /employees:
+    get:
+      operationId: listEmployees
+      tags: [employees]
+      summary: List all employees
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: department
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Employee" }
+    post:
+      operationId: createEmployee
+      tags: [employees]
+      summary: Create an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateEmployeeBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Employee" }
+
+  /employees/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: getEmployee
+      tags: [employees]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Employee" }
+    patch:
+      operationId: updateEmployee
+      tags: [employees]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateEmployeeBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Employee" }
+    delete:
+      operationId: deleteEmployee
+      tags: [employees]
+      responses:
+        "204":
+          description: Deleted
+
+  /attendance:
+    get:
+      operationId: listAttendance
+      tags: [attendance]
+      summary: List attendance records
+      parameters:
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+        - in: query
+          name: employeeId
+          schema: { type: integer }
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AttendanceRecord" }
+
+  /attendance/today:
+    get:
+      operationId: getTodayAttendance
+      tags: [attendance]
+      summary: Today's attendance with employee info joined
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AttendanceWithEmployee" }
+
+  /attendance/check-in:
+    post:
+      operationId: checkIn
+      tags: [attendance]
+      summary: Check in an employee for today
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckInBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceRecord" }
+
+  /attendance/check-out:
+    post:
+      operationId: checkOut
+      tags: [attendance]
+      summary: Check out an employee for today
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckOutBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceRecord" }
+
+  /attendance/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    patch:
+      operationId: updateAttendance
+      tags: [attendance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateAttendanceBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceRecord" }
+    delete:
+      operationId: deleteAttendance
+      tags: [attendance]
+      responses:
+        "204":
+          description: Deleted
+
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [stats]
+      summary: Today's attendance summary stats
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatsSummary" }
+
+  /stats/by-department:
+    get:
+      operationId: getStatsByDepartment
+      tags: [stats]
+      summary: Today's attendance grouped by department
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DepartmentStat" }
+
+  /stats/weekly-trend:
+    get:
+      operationId: getWeeklyTrend
+      tags: [stats]
+      summary: Last 7 days attendance trend
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DailyTrend" }
+
+  /attendance/recent:
+    get:
+      operationId: getRecentActivity
+      tags: [attendance]
+      summary: Most recent check-in/check-out activity
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 10 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ActivityItem" }
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
 
+    AttendanceStatus:
+      type: string
+      enum: [present, late, absent, on_leave]
+
+    Employee:
+      type: object
+      required: [id, name, email, department, role, avatarColor, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        department: { type: string }
+        role: { type: string }
+        avatarColor: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    CreateEmployeeBody:
+      type: object
+      required: [name, email, department, role]
+      properties:
+        name: { type: string, minLength: 1 }
+        email: { type: string, minLength: 3 }
+        department: { type: string, minLength: 1 }
+        role: { type: string, minLength: 1 }
+        avatarColor: { type: string }
+
+    UpdateEmployeeBody:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string }
+        department: { type: string }
+        role: { type: string }
+        avatarColor: { type: string }
+
+    AttendanceRecord:
+      type: object
+      required: [id, employeeId, date, status, createdAt]
+      properties:
+        id: { type: integer }
+        employeeId: { type: integer }
+        date: { type: string, format: date }
+        status: { $ref: "#/components/schemas/AttendanceStatus" }
+        checkInTime:
+          type: string
+          format: date-time
+          nullable: true
+        checkOutTime:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt: { type: string, format: date-time }
+
+    AttendanceWithEmployee:
+      type: object
+      required: [id, employeeId, date, status, employee, createdAt]
+      properties:
+        id: { type: integer }
+        employeeId: { type: integer }
+        date: { type: string, format: date }
+        status: { $ref: "#/components/schemas/AttendanceStatus" }
+        checkInTime:
+          type: string
+          format: date-time
+          nullable: true
+        checkOutTime:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt: { type: string, format: date-time }
+        employee: { $ref: "#/components/schemas/Employee" }
+
+    CheckInBody:
+      type: object
+      required: [employeeId]
+      properties:
+        employeeId: { type: integer }
+        notes: { type: string }
+
+    CheckOutBody:
+      type: object
+      required: [employeeId]
+      properties:
+        employeeId: { type: integer }
+        notes: { type: string }
+
+    UpdateAttendanceBody:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/AttendanceStatus" }
+        checkInTime: { type: string, format: date-time, nullable: true }
+        checkOutTime: { type: string, format: date-time, nullable: true }
+        notes: { type: string, nullable: true }
+
+    StatsSummary:
+      type: object
+      required: [totalEmployees, presentToday, lateToday, absentToday, onLeaveToday, attendanceRate, averageCheckInTime]
+      properties:
+        totalEmployees: { type: integer }
+        presentToday: { type: integer }
+        lateToday: { type: integer }
+        absentToday: { type: integer }
+        onLeaveToday: { type: integer }
+        attendanceRate: { type: number }
+        averageCheckInTime:
+          type: string
+          nullable: true
+
+    DepartmentStat:
+      type: object
+      required: [department, total, present, late, absent, onLeave]
+      properties:
+        department: { type: string }
+        total: { type: integer }
+        present: { type: integer }
+        late: { type: integer }
+        absent: { type: integer }
+        onLeave: { type: integer }
+
+    DailyTrend:
+      type: object
+      required: [date, present, late, absent, onLeave]
+      properties:
+        date: { type: string, format: date }
+        present: { type: integer }
+        late: { type: integer }
+        absent: { type: integer }
+        onLeave: { type: integer }
+
+    ActivityItem:
+      type: object
+      required: [id, employeeId, employeeName, department, action, timestamp]
+      properties:
+        id: { type: integer }
+        employeeId: { type: integer }
+        employeeName: { type: string }
+        department: { type: string }
+        avatarColor: { type: string }
+        action:
+          type: string
+          enum: [check_in, check_out]
+        timestamp: { type: string, format: date-time }
