@@ -4,9 +4,8 @@ import session from "express-session";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { loadUser } from "./middlewares/auth";
-import pinoHttpModule from "pino-http";
 
-const pinoHttp = (pinoHttpModule as any).default || pinoHttpModule;
+const pinoHttp = require("pino-http");
 
 const app: Express = express();
 
