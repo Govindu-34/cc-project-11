@@ -13,6 +13,7 @@ tags:
   - name: employees
   - name: attendance
   - name: stats
+  - name: leaves
 paths:
   /healthz:
     get:
@@ -52,6 +53,19 @@ paths:
       responses:
         "204":
           description: Logged out
+
+  /auth/change-password:
+    post:
+      operationId: authChangePassword
+      tags: [auth]
+      summary: Change current user's password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangePasswordBody" }
+      responses:
+        "204": { description: Updated }
 
   /auth/me:
     get:
@@ -128,6 +142,106 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AttendanceRecord" }
+
+  /attendance/export:
+    get:
+      operationId: exportAttendanceCsv
+      tags: [attendance]
+      summary: Download attendance as CSV (admin)
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: CSV download
+          content:
+            text/csv:
+              schema: { type: string }
+
+  /leaves:
+    get:
+      operationId: listLeaves
+      tags: [leaves]
+      summary: List leave requests (admin)
+      parameters:
+        - in: query
+          name: status
+          schema: { $ref: "#/components/schemas/LeaveStatus" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LeaveRequestRecord" }
+    post:
+      operationId: createLeave
+      tags: [leaves]
+      summary: Submit a leave request as the signed-in user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateLeaveBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaveRequestRecord" }
+
+  /leaves/my:
+    get:
+      operationId: listMyLeaves
+      tags: [leaves]
+      summary: List the signed-in user's leave requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LeaveRequestRecord" }
+
+  /leaves/{id}/approve:
+    post:
+      operationId: approveLeave
+      tags: [leaves]
+      summary: Approve a leave request (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaveRequestRecord" }
+
+  /leaves/{id}/reject:
+    post:
+      operationId: rejectLeave
+      tags: [leaves]
+      summary: Reject a leave request (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaveRequestRecord" }
 
   /employees:
     get:
@@ -430,6 +544,40 @@ components:
       type: object
       properties:
         notes: { type: string }
+
+    ChangePasswordBody:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string }
+        newPassword: { type: string, minLength: 4 }
+
+    LeaveStatus:
+      type: string
+      enum: [pending, approved, rejected]
+
+    LeaveRequestRecord:
+      type: object
+      required: [id, employeeId, startDate, endDate, reason, status, createdAt]
+      properties:
+        id: { type: integer }
+        employeeId: { type: integer }
+        employeeName: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        reason: { type: string }
+        status: { $ref: "#/components/schemas/LeaveStatus" }
+        decidedBy: { type: integer, nullable: true }
+        decidedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    CreateLeaveBody:
+      type: object
+      required: [startDate, endDate, reason]
+      properties:
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        reason: { type: string, minLength: 1 }
 
     MyTodayResponse:
       type: object

@@ -1,9 +1,11 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, Clock, History, Cloud, LogOut, UserCircle } from "lucide-react";
+import { useState } from "react";
+import { LayoutDashboard, Users, Clock, History, Cloud, LogOut, UserCircle, CalendarCheck, KeyRound } from "lucide-react";
 import { motion } from "framer-motion";
 import { authLogout } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth-context";
+import { ChangePasswordModal } from "@/components/change-password-modal";
 
 type Role = "admin" | "user";
 
@@ -12,6 +14,7 @@ const adminLinks = [
   { href: "/attendance", label: "Attendance", icon: Clock },
   { href: "/employees", label: "Employees", icon: Users },
   { href: "/history", label: "History", icon: History },
+  { href: "/leaves", label: "Leaves", icon: CalendarCheck },
   { href: "/me", label: "My check-in", icon: UserCircle },
 ];
 
@@ -23,6 +26,7 @@ export function Layout({ children, role }: { children: React.ReactNode; role: Ro
   const [location] = useLocation();
   const { user, signOut, refresh } = useAuth();
   const links = role === "admin" ? adminLinks : userLinks;
+  const [pwOpen, setPwOpen] = useState(false);
 
   async function handleSignOut() {
     try {
@@ -86,11 +90,18 @@ export function Layout({ children, role }: { children: React.ReactNode; role: Ro
             </div>
           </div>
           <button
+            onClick={() => setPwOpen(true)}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl bg-white/30 dark:bg-white/5 hover:bg-white/40 dark:hover:bg-white/10 text-sm font-medium transition"
+          >
+            <KeyRound className="h-4 w-4" /> Change password
+          </button>
+          <button
             onClick={handleSignOut}
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl bg-white/30 dark:bg-white/5 hover:bg-white/40 dark:hover:bg-white/10 text-sm font-medium transition"
           >
             <LogOut className="h-4 w-4" /> Sign out
           </button>
+          <ChangePasswordModal open={pwOpen} onOpenChange={setPwOpen} />
         </div>
       </motion.aside>
 

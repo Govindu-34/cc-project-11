@@ -36,6 +36,16 @@ export const AuthLoginResponse = zod.object({
 });
 
 /**
+ * @summary Change current user's password
+ */
+export const authChangePasswordBodyNewPasswordMin = 4;
+
+export const AuthChangePasswordBody = zod.object({
+  currentPassword: zod.string(),
+  newPassword: zod.string().min(authChangePasswordBodyNewPasswordMin),
+});
+
+/**
  * @summary Current session info
  */
 export const AuthMeResponse = zod.object({
@@ -123,6 +133,102 @@ export const MyCheckOutResponse = zod.object({
   checkInTime: zod.coerce.date().nullish(),
   checkOutTime: zod.coerce.date().nullish(),
   notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Download attendance as CSV (admin)
+ */
+export const ExportAttendanceCsvQueryParams = zod.object({
+  from: zod.date().optional(),
+  to: zod.date().optional(),
+});
+
+/**
+ * @summary List leave requests (admin)
+ */
+export const ListLeavesQueryParams = zod.object({
+  status: zod.enum(["pending", "approved", "rejected"]).optional(),
+});
+
+export const ListLeavesResponseItem = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  employeeName: zod.string().optional(),
+  startDate: zod.coerce.date(),
+  endDate: zod.coerce.date(),
+  reason: zod.string(),
+  status: zod.enum(["pending", "approved", "rejected"]),
+  decidedBy: zod.number().nullish(),
+  decidedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListLeavesResponse = zod.array(ListLeavesResponseItem);
+
+/**
+ * @summary Submit a leave request as the signed-in user
+ */
+
+export const CreateLeaveBody = zod.object({
+  startDate: zod.coerce.date(),
+  endDate: zod.coerce.date(),
+  reason: zod.string().min(1),
+});
+
+/**
+ * @summary List the signed-in user's leave requests
+ */
+export const ListMyLeavesResponseItem = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  employeeName: zod.string().optional(),
+  startDate: zod.coerce.date(),
+  endDate: zod.coerce.date(),
+  reason: zod.string(),
+  status: zod.enum(["pending", "approved", "rejected"]),
+  decidedBy: zod.number().nullish(),
+  decidedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListMyLeavesResponse = zod.array(ListMyLeavesResponseItem);
+
+/**
+ * @summary Approve a leave request (admin)
+ */
+export const ApproveLeaveParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ApproveLeaveResponse = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  employeeName: zod.string().optional(),
+  startDate: zod.coerce.date(),
+  endDate: zod.coerce.date(),
+  reason: zod.string(),
+  status: zod.enum(["pending", "approved", "rejected"]),
+  decidedBy: zod.number().nullish(),
+  decidedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Reject a leave request (admin)
+ */
+export const RejectLeaveParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const RejectLeaveResponse = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  employeeName: zod.string().optional(),
+  startDate: zod.coerce.date(),
+  endDate: zod.coerce.date(),
+  reason: zod.string(),
+  status: zod.enum(["pending", "approved", "rejected"]),
+  decidedBy: zod.number().nullish(),
+  decidedAt: zod.coerce.date().nullish(),
   createdAt: zod.coerce.date(),
 });
 

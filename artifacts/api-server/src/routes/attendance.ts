@@ -22,6 +22,51 @@ const router: IRouter = Router();
 
 router.use("/attendance", requireAdmin);
 
+router.get("/attendance/export", async (req, res): Promise<void> => {
+  const fromStr = typeof req.query.from === "string" ? req.query.from : undefined;
+  const toStr = typeof req.query.to === "string" ? req.query.to : undefined;
+  const conditions: SQL[] = [];
+  if (fromStr) conditions.push(gte(attendanceTable.date, fromStr));
+  if (toStr) conditions.push(lte(attendanceTable.date, toStr));
+  const rows = await db
+    .select({
+      date: attendanceTable.date,
+      employeeName: employeesTable.name,
+      email: employeesTable.email,
+      department: employeesTable.department,
+      role: employeesTable.role,
+      status: attendanceTable.status,
+      checkInTime: attendanceTable.checkInTime,
+      checkOutTime: attendanceTable.checkOutTime,
+      notes: attendanceTable.notes,
+    })
+    .from(attendanceTable)
+    .leftJoin(employeesTable, eq(employeesTable.id, attendanceTable.employeeId))
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(attendanceTable.date), employeesTable.name);
+
+  const escape = (v: unknown): string => {
+    if (v == null) return "";
+    const s = v instanceof Date ? v.toISOString() : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const headers = [
+    "date","employee","email","department","role","status","check_in","check_out","notes",
+  ];
+  const lines = [headers.join(",")];
+  for (const r of rows) {
+    lines.push([
+      r.date, r.employeeName, r.email, r.department, r.role,
+      r.status, r.checkInTime, r.checkOutTime, r.notes,
+    ].map(escape).join(","));
+  }
+  const csv = lines.join("\n");
+  const stamp = new Date().toISOString().slice(0, 10);
+  res.setHeader("content-type", "text/csv; charset=utf-8");
+  res.setHeader("content-disposition", `attachment; filename="attendance-${stamp}.csv"`);
+  res.send(csv);
+});
+
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
 }

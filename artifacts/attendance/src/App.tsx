@@ -13,6 +13,7 @@ import Attendance from "@/pages/attendance";
 import Employees from "@/pages/employees";
 import History from "@/pages/history";
 import MyAttendance from "@/pages/my-attendance";
+import LeavesAdmin from "@/pages/leaves";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,7 @@ function AdminRoutes() {
       <Route path="/attendance" component={Attendance} />
       <Route path="/employees" component={Employees} />
       <Route path="/history" component={History} />
+      <Route path="/leaves" component={LeavesAdmin} />
       <Route path="/me" component={MyAttendance} />
       <Route component={NotFound} />
     </Switch>

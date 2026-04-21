@@ -9,7 +9,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, Clock, LogIn, LogOut, MoreHorizontal } from "lucide-react";
+import { Search, Clock, LogIn, LogOut, MoreHorizontal, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export default function Attendance() {
@@ -80,13 +80,22 @@ export default function Attendance() {
           <h1 className="text-3xl font-bold tracking-tight">Today's Attendance</h1>
           <p className="text-muted-foreground">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
         </div>
-        <button 
-          onClick={() => setIsCheckInModalOpen(true)}
-          className="bg-primary text-primary-foreground px-5 py-2.5 rounded-2xl font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
-        >
-          <LogIn className="w-4 h-4" />
-          Manual Check In
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/attendance/export`}
+            className="glass-panel px-4 py-2.5 rounded-2xl font-medium flex items-center gap-2 hover:-translate-y-0.5 transition-all"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </a>
+          <button
+            onClick={() => setIsCheckInModalOpen(true)}
+            className="bg-primary text-primary-foreground px-5 py-2.5 rounded-2xl font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
+          >
+            <LogIn className="w-4 h-4" />
+            Manual Check In
+          </button>
+        </div>
       </div>
 
       <div className="glass-panel p-2 rounded-2xl flex flex-col sm:flex-row gap-2 items-center z-10 relative">

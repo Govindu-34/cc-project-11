@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { db, employeesTable } from "@workspace/db";
-import { AuthLoginBody, AuthLoginResponse, AuthMeResponse } from "@workspace/api-zod";
+import { AuthLoginBody, AuthLoginResponse, AuthMeResponse, AuthChangePasswordBody } from "@workspace/api-zod";
 import { getUser, requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -49,6 +49,36 @@ router.post("/auth/logout", (req, res): void => {
     res.clearCookie("connect.sid");
     res.sendStatus(204);
   });
+});
+
+router.post("/auth/change-password", requireAuth, async (req, res): Promise<void> => {
+  const user = getUser(req)!;
+  const parsed = AuthChangePasswordBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [row] = await db
+    .select()
+    .from(employeesTable)
+    .where(eq(employeesTable.id, user.id));
+  if (!row) {
+    res.status(404).json({ error: "Account not found" });
+    return;
+  }
+  const ok = row.passwordHash
+    ? await bcrypt.compare(parsed.data.currentPassword, row.passwordHash)
+    : false;
+  if (!ok) {
+    res.status(400).json({ error: "Current password is incorrect" });
+    return;
+  }
+  const newHash = await bcrypt.hash(parsed.data.newPassword, 10);
+  await db
+    .update(employeesTable)
+    .set({ passwordHash: newHash })
+    .where(eq(employeesTable.id, user.id));
+  res.sendStatus(204);
 });
 
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {

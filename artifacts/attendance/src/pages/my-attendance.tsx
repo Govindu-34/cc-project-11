@@ -1,12 +1,14 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Clock, LogIn, LogOut, CalendarDays, CheckCircle2, Timer, Loader2 } from "lucide-react";
+import { LogIn, LogOut, CalendarDays, CheckCircle2, Timer, Loader2, Plane, Send } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import {
   useGetMyToday,
   useGetMyHistory,
   useMyCheckIn,
   useMyCheckOut,
+  useListMyLeaves,
+  useCreateLeave,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
@@ -22,8 +24,26 @@ export default function MyAttendance() {
   const { user } = useAuth();
   const { data: today, isLoading } = useGetMyToday();
   const { data: history } = useGetMyHistory({ limit: 14 });
+  const { data: myLeaves } = useListMyLeaves();
   const qc = useQueryClient();
   const { toast } = useToast();
+
+  const [leaveStart, setLeaveStart] = React.useState("");
+  const [leaveEnd, setLeaveEnd] = React.useState("");
+  const [leaveReason, setLeaveReason] = React.useState("");
+
+  const createLeave = useCreateLeave({
+    mutation: {
+      onSuccess: () => {
+        toast({ title: "Leave request submitted" });
+        setLeaveStart("");
+        setLeaveEnd("");
+        setLeaveReason("");
+        qc.invalidateQueries();
+      },
+      onError: (e) => toast({ title: "Failed", description: String(e), variant: "destructive" }),
+    },
+  });
 
   const checkIn = useMyCheckIn({
     mutation: {
@@ -140,6 +160,86 @@ export default function MyAttendance() {
           ))}
           {!history?.length && (
             <div className="py-8 text-center text-muted-foreground">No attendance history yet.</div>
+          )}
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="glass-panel rounded-3xl p-6"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Plane className="h-5 w-5" />
+          <h3 className="text-lg font-semibold">Request leave</h3>
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!leaveStart || !leaveEnd || !leaveReason.trim()) return;
+            createLeave.mutate({
+              data: { startDate: leaveStart, endDate: leaveEnd, reason: leaveReason },
+            });
+          }}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+        >
+          <input
+            type="date"
+            required
+            value={leaveStart}
+            onChange={(e) => setLeaveStart(e.target.value)}
+            className="px-4 py-2.5 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/30 focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <input
+            type="date"
+            required
+            value={leaveEnd}
+            onChange={(e) => setLeaveEnd(e.target.value)}
+            className="px-4 py-2.5 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/30 focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <button
+            type="submit"
+            disabled={createLeave.isPending}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium shadow disabled:opacity-60"
+          >
+            {createLeave.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Submit
+          </button>
+          <textarea
+            required
+            placeholder="Reason for leave..."
+            value={leaveReason}
+            onChange={(e) => setLeaveReason(e.target.value)}
+            className="sm:col-span-3 px-4 py-2.5 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/30 focus:outline-none focus:ring-2 focus:ring-primary/40 min-h-[80px]"
+          />
+        </form>
+
+        <div className="mt-6 divide-y divide-white/20">
+          {(myLeaves ?? []).map((l) => (
+            <div key={l.id} className="py-3 flex items-center justify-between">
+              <div>
+                <div className="font-medium">
+                  {format(parseISO(l.startDate as unknown as string), "MMM d")} →{" "}
+                  {format(parseISO(l.endDate as unknown as string), "MMM d, yyyy")}
+                </div>
+                <div className="text-xs text-muted-foreground">{l.reason}</div>
+              </div>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full capitalize ${
+                  l.status === "approved"
+                    ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                    : l.status === "rejected"
+                      ? "bg-rose-500/20 text-rose-700 dark:text-rose-300"
+                      : "bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                }`}
+              >
+                {l.status}
+              </span>
+            </div>
+          ))}
+          {!myLeaves?.length && (
+            <div className="py-6 text-center text-muted-foreground text-sm">No leave requests yet.</div>
           )}
         </div>
       </motion.div>

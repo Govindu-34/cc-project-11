@@ -76,6 +76,40 @@ export interface SelfActionBody {
   notes?: string;
 }
 
+export interface ChangePasswordBody {
+  currentPassword: string;
+  /** @minLength 4 */
+  newPassword: string;
+}
+
+export type LeaveStatus = (typeof LeaveStatus)[keyof typeof LeaveStatus];
+
+export const LeaveStatus = {
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
+} as const;
+
+export interface LeaveRequestRecord {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: LeaveStatus;
+  decidedBy?: number | null;
+  decidedAt?: string | null;
+  createdAt: string;
+}
+
+export interface CreateLeaveBody {
+  startDate: string;
+  endDate: string;
+  /** @minLength 1 */
+  reason: string;
+}
+
 export interface AttendanceRecord {
   id: number;
   employeeId: number;
@@ -167,6 +201,15 @@ export interface ActivityItem {
 
 export type GetMyHistoryParams = {
   limit?: number;
+};
+
+export type ExportAttendanceCsvParams = {
+  from?: string;
+  to?: string;
+};
+
+export type ListLeavesParams = {
+  status?: LeaveStatus;
 };
 
 export type ListEmployeesParams = {
